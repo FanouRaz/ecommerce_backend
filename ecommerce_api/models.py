@@ -28,7 +28,7 @@ class Commande(models.Model):
     id_commande = models.IntegerField(primary_key=True)
     id_utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
     produit = models.ManyToManyField(Produit)
-    date_commande = models.DateField()
+    date_commande = models.DateField(auto_now_add=True)
     date_livraison = models.DateField()
     status_annulation = models.BooleanField()
     date_annulation = models.DateField()
