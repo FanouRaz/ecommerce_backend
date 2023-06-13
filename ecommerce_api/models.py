@@ -7,17 +7,19 @@ class Utilisateur(models.Model):
     prenom_utilisateur = models.CharField(max_length=50)
     email = models.CharField(max_length=100)
     password = models.CharField(max_length=100)
-    role = models.CharField(max_length=30)
+    role = models.CharField(max_length=30,default="simple_utilisateur")
     
 class Produit(models.Model):
     id_produit = models.IntegerField(primary_key=True)
+    id_utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE,null=True)
     nom = models.CharField(max_length=100)
     quantite_stock = models.IntegerField()
     seuil_minimal = models.IntegerField()
     categorie = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     prix = models.IntegerField()
-
+    pathImg = models.CharField(max_length=100,default="")
+    
 class Panier(models.Model):
     id_panier = models.IntegerField(primary_key=True)
     utilisateur = models.OneToOneField(Utilisateur, on_delete=models.CASCADE)
