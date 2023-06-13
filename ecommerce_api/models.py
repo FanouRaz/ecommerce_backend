@@ -7,7 +7,7 @@ class Utilisateur(models.Model):
     prenom_utilisateur = models.CharField(max_length=50)
     email = models.CharField(max_length=100)
     password = models.CharField(max_length=100)
-    role = models.TextChoices("admin","simple utilisateur")
+    role = models.CharField(max_length=30)
     
 class Produit(models.Model):
     id_produit = models.IntegerField(primary_key=True)
