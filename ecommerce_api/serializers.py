@@ -2,77 +2,68 @@ from rest_framework import serializers
 
 from .models import Utilisateur,Panier,Produit,Payement,Livraison,Achat,Notification,Evaluation,Commande,Session
 
-class UtilisateurSerializer(serializers.Serializer):
-    id_utilisateur = serializers.IntegerField()
-    nom_utilisateur = serializers.CharField(max_length=50)
-    prenom_utilisateur = serializers.CharField(max_length=50)
-    email = serializers.CharField(max_length=100)
-    role = serializers.CharField(max_length=30)
-    #password = serializers.CharField(max_length=100)
+class UtilisateurSerializer(serializers.ModelSerializer):
+   class Meta:
+       model = Utilisateur
+       exclude = ['password']
+           
+class ProduitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Produit
+        fields = '__all__'
     
-    def create(self, validated_data):
-        return Utilisateur.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        instance.nom_utilisateur = validated_data.get('nom_utilisateur', instance.nom_utilisateur)
-        instance.prenom_utilisateur = validated_data.get('prenom_utilisateur', instance.prenom_utilisateur)
-        instance.email = validated_data.get('email', instance.email)
-        instance.role = validated_data.get('email', instance.role)
-        #instance.password = validated_data.get('password', instance.password)
-        instance.save()
-        return instance 
-    
-class ProduitSerializer(serializers.Serializer):
-    id_produit = serializers.IntegerField()
-    nom = serializers.CharField(max_length=100)
-    quantite_stock = serializers.IntegerField()
-    seuil_minimal = serializers.IntegerField()
-    categorie = serializers.CharField(max_length=100)
-    region = serializers.CharField(max_length=100)
-    prix = serializers.IntegerField()
-    pathImg = serializers.CharField(max_length=100)
-    
-    def create(self, validated_data):
-        return Produit.objects.create(**validated_data)
-    
-    def update(self,instance,validated_data):
-     # Mettre à jour les champs de l'instance Produit existante
-        instance.nom = validated_data.get('nom', instance.nom)
-        instance.quantite_stock = validated_data.get('quantite_stock', instance.quantite_stock)
-        instance.seuil_minimal = validated_data.get('seuil_minimal', instance.seuil_minimal)
-        instance.categorie = validated_data.get('categorie', instance.categorie)
-        instance.region = validated_data.get('region', instance.region)
-        instance.prix = validated_data.get('prix', instance.prix)
-        instance.save()
-
-        return instance
-    
-class PanierSerializer(serializers.Serializer):
+class PanierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Panier
         fields = '__all__'
+    """ produits = serializers.PrimaryKeyRelatedField(queryset=Produit.objects.all(), many=True)
+
+    def create(self, validated_data):
+        produits_data = validated_data.pop('produits')
+        panier = Panier.objects.create(**validated_data)
+        panier.produits.set(produits_data)
+        return panier
+
+    def update(self, instance, validated_data):
+        instance.utilisateur = validated_data.get('utilisateur', instance.utilisateur)
+        instance.quantite = validated_data.get('quantite', instance.quantite)
+        produits_data = validated_data.get('produits', [])
+        instance.produits.set(produits_data)
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        representation = {
+            'id_panier': instance.id_panier,
+            'utilisateur': instance.utilisateur.id,
+            'produits': [produit.id for produit in instance.produits.all()],
+            'quantite': instance.quantite
+        }
         
-class CommandeSerializer(serializers.Serializer):
+        return representation
+ """
+       
+class CommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = '__all__'
 
-class LivraisonSerializer(serializers.Serializer):
+class LivraisonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Livraison
         fields = '__all__'
 
-class NotificationSerializer(serializers.Serializer):
+class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
 
-class EvaluationSerializer(serializers.Serializer):
+class EvaluationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evaluation
         fields = '__all__'
 
-class PayementSerializer(serializers.Serializer):
+class PayementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payement
         fields = '__all__'
@@ -82,7 +73,7 @@ class AchatSerializer(serializers.Serializer):
         model = Achat
         fields = '__all__'
         
-class SessionSerializer(serializers.Serializer):
+class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = '__all__' 

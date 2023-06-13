@@ -113,3 +113,5 @@ def deleteProductById(request,id):
     
     product.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+#Endpoint Panier
