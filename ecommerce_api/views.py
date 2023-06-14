@@ -62,7 +62,7 @@ def createUser(request):
     
     if serializer.is_valid():
         serializer.save()
-        return Response(f"Utilisateur créer avec succès", status=status.HTTP_201_CREATED)
+        return Response({"message":"User created succesfully!"}, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -100,7 +100,7 @@ def createProduct(request):
     
     if serializer.is_valid():
         serializer.save()
-        return Response(f"Utilisateur créer avec succès", status=status.HTTP_201_CREATED)
+        return Response({"message":"Product created succesfully!"}, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -112,6 +112,88 @@ def deleteProductById(request,id):
         return Response(status=status.HTTP_404_NOT_FOUND)
     
     product.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response({"message":"Product deleted succesfully!"},status=status.HTTP_204_NO_CONTENT)
 
 #Endpoint Panier
+@api_view(["GET"])
+def getPanier(request,id):
+    try:
+        produits = Panier.objects.get(utilisateur_id=id).produits
+        serializer = ProduitSerializer(produits,many=True)
+        return Response(serializer.data)
+    except Panier.DoesNotExist:
+        return Response({'message': 'Le panier de cette utilisateur est introuvable'}, status=404)
+    
+@api_view(['POST', 'DELETE'])
+def addOrRemoveInPanier(request, id_utilisateur, id_produit):
+    try:
+        panier = Panier.objects.get(utilisateur_id=id_utilisateur)
+        produit = Produit.objects.get(id_produit=id_produit)
+
+        if request.method == 'POST':
+            panier.produits.add(produit)
+        elif request.method == 'DELETE':
+            panier.produits.remove(produit)
+
+        serializer = PanierSerializer(panier)
+        return Response(serializer.data)
+
+    except (Panier.DoesNotExist, Produit.DoesNotExist):
+        return Response({'message': 'User or product not found'}, status=404)
+
+#Endpoint Commande    
+@api_view(["GET"])
+def getCommande(request,id):
+    try:
+        commandes = Commande.objects.get(id_utilisateur=id).produit
+        serializer = ProduitSerializer(commandes,many=True)
+        return Response(serializer.data)
+    except Commande.DoesNotExist:
+        return Response({'message': 'Les commandes de cette utilisateur est introuvable'}, status=404)
+    
+@api_view(['POST', 'DELETE'])
+def addOrRemoveCommande(request, utilisateur_id, produit_id):
+    try:
+        commande = Commande.objects.get(id_utilisateur=utilisateur_id)
+    except Commande.DoesNotExist:
+        return Response({"message": "Commande non trouvée"}, status=404)
+
+    if request.method == 'POST':
+        try:
+            commande.produit.add(produit_id)
+        except Exception as e:
+            return Response({"message": str(e)}, status=400)
+
+    elif request.method == 'DELETE':
+        try:
+            commande.produit.remove(produit_id)
+        except Exception as e:
+            return Response({"message": str(e)}, status=400)
+
+    serializer = CommandeSerializer(commande)
+    return Response(serializer.data)
+
+#endpoint evaluation
+@api_view(['POST', 'PUT'])
+def evaluate_product(request, utilisateur_id, produit_id):
+    if request.method == 'POST':
+        data = request.data
+        data['utilisateur'] = utilisateur_id
+        data['produit'] = produit_id
+        serializer = EvaluationSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+    elif request.method == 'PUT':
+        try:
+            evaluation = Evaluation.objects.get(utilisateur=utilisateur_id, produit=produit_id)
+        except Evaluation.DoesNotExist:
+            return Response({"message": "Evaluation not found"}, status=404)
+
+        serializer = EvaluationSerializer(evaluation, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)

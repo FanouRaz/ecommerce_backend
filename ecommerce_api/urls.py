@@ -13,4 +13,8 @@ urlpatterns = [
     path("updateProduct/<int:id>",views.updateProduct,name="update user"),
     path("createProduct/",views.createProduct,name="create product"),
     path("deleteProduct/<int:id>",views.deleteProductById,name="delete product"),
+    path("panier/<int:id>",views.getPanier,name="get products in the panier of a user"),
+    path("panier/<int:id_utilisateur>/<int:id_produit>",views.addOrRemoveInPanier,name="add or remove product to Panier"),
+    path("commandes/<int:id>",views.getCommande,name="get commande of an user"),
+    path("commande/<int:utilisateur_id>/<int:produit_id>",views.addOrRemoveCommande, name="Add or Remove product to commande")
 ]

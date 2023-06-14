@@ -11,7 +11,6 @@ class Utilisateur(models.Model):
     
 class Produit(models.Model):
     id_produit = models.IntegerField(primary_key=True)
-    id_utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE,null=True)
     nom = models.CharField(max_length=100)
     quantite_stock = models.IntegerField()
     seuil_minimal = models.IntegerField()
@@ -24,17 +23,16 @@ class Panier(models.Model):
     id_panier = models.IntegerField(primary_key=True)
     utilisateur = models.OneToOneField(Utilisateur, on_delete=models.CASCADE)
     produits = models.ManyToManyField(Produit)
-    quantite = models.IntegerField()
 
 class Commande(models.Model):
     id_commande = models.IntegerField(primary_key=True)
     id_utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
-    produit = models.ManyToManyField(Produit)
+    produit = models.ManyToManyField(Produit,blank=True)
     date_commande = models.DateField(auto_now_add=True)
     date_livraison = models.DateField()
     status_annulation = models.BooleanField()
     date_annulation = models.DateField()
-    quantite = models.IntegerField()
+    
 
 class Notification(models.Model):
     id_notification = models.IntegerField(primary_key=True)
@@ -43,10 +41,13 @@ class Notification(models.Model):
     message = models.CharField(max_length=100)
     
 class Evaluation(models.Model):
-    id_evaluation = models.IntegerField(primary_key=True)
-    id_utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
-    produits = models.ManyToManyField(Produit)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     note = models.IntegerField()
+    commentaire = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ['utilisateur', 'produit']
     
 
 class Livraison(models.Model):
