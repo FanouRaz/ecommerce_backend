@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-v7*p@&_$jkc=e-y+g^3(x)z1qdww6dbp3mr(no6l8f%-$7kl54
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.134","localhost"]
+ALLOWED_HOSTS = ["192.168.43.15","localhost"]
 
 
 # Application definition
@@ -142,3 +143,33 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES':(
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+AUTH_USER_MODEL = "ecommerce_api.Utilisateur"
+
+MEDIA_ROOT =  os.path.join(BASE_DIR, 'media') 
+MEDIA_URL = '/media/'
+
+# Configuration JWT
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Durée de validité du token d'accès
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Durée de validité du token de rafraîchissement
+    'ROTATE_REFRESH_TOKENS': False,  # Active ou désactive la rotation automatique des tokens de rafraîchissement
+    'BLACKLIST_AFTER_ROTATION': True,  # Met automatiquement les anciens tokens de rafraîchissement sur liste noire lors de la rotation
+    'ALGORITHM': 'HS256',  # Algorithme de signature utilisé pour les tokens
+    'SIGNING_KEY': 'secret',  # Clé de signature du token (à remplacer par votre clé secrète)
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Types d'en-tête d'autorisation pris en charge pour le token
+    'USER_ID_FIELD': 'id',  # Nom du champ d'identifiant de l'utilisateur dans le modèle d'utilisateur
+    'USER_ID_CLAIM': 'user_id',  # Nom de la revendication d'identifiant de l'utilisateur dans le token
+    'AUTH_TOKEN_CLASSES': [
+        'rest_framework_simplejwt.tokens.AccessToken',
+    ],
+}

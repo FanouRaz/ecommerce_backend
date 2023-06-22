@@ -1,6 +1,7 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Utilisateur,Panier,Produit,Payement,Livraison,Achat,Notification,Evaluation,Commande,Session
+from .models import *
 
 class UtilisateurSerializer(serializers.ModelSerializer):
    class Meta:
@@ -16,32 +17,6 @@ class PanierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Panier
         fields = '__all__'
-    """ produits = serializers.PrimaryKeyRelatedField(queryset=Produit.objects.all(), many=True)
-
-    def create(self, validated_data):
-        produits_data = validated_data.pop('produits')
-        panier = Panier.objects.create(**validated_data)
-        panier.produits.set(produits_data)
-        return panier
-
-    def update(self, instance, validated_data):
-        instance.utilisateur = validated_data.get('utilisateur', instance.utilisateur)
-        instance.quantite = validated_data.get('quantite', instance.quantite)
-        produits_data = validated_data.get('produits', [])
-        instance.produits.set(produits_data)
-        instance.save()
-        return instance
-
-    def to_representation(self, instance):
-        representation = {
-            'id_panier': instance.id_panier,
-            'utilisateur': instance.utilisateur.id,
-            'produits': [produit.id for produit in instance.produits.all()],
-            'quantite': instance.quantite
-        }
-        
-        return representation
- """
        
 class CommandeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,3 +52,48 @@ class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = '__all__' 
+        
+
+""" class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        # Validate the input data
+        self.user = Utilisateur.objects.filter(email=attrs['email']).first()
+        if self.user and self.user.check_password(attrs['password']):
+            data = super().validate(attrs)
+            
+            data['id_utilisateur'] = self.user.id_utilisateur
+            data['nom_utilisateur'] = self.user.nom_utilisateur
+            data['prenom_utilisateur'] = self.user.prenom_utilisateur
+            
+            # Add any other custom data you want to include
+            return data
+        else:
+            # If the user does not exist or the password is invalid, raise an error
+            raise serializers.ValidationError("Unable to log in with provided credentials.")
+"""
+from rest_framework_simplejwt.tokens import RefreshToken
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if email and password:
+            utilisateur = Utilisateur.objects.filter(email=email).first()
+
+            if utilisateur and utilisateur.check_password(password):
+                token_data = {
+                    'id_utilisateur': utilisateur.id,
+                    'nom_utilisateur': utilisateur.nom_utilisateur,
+                    'prenom_utilisateur': utilisateur.prenom_utilisateur,
+                    'role':utilisateur.role
+                }
+
+                # Génération manuelle du jeton d'accès
+                refresh_token = RefreshToken.for_user(utilisateur)
+                token_data['access'] = str(refresh_token.access_token)
+                token_data['refresh'] = str(refresh_token)
+
+                return token_data
+
+        raise serializers.ValidationError("Unable to log in with provided credentials.")

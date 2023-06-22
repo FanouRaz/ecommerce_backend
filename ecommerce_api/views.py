@@ -1,13 +1,18 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,authentication_classes, permission_classes
 from rest_framework.response import Response
+from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import *
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer 
 
 @api_view(["GET"])
 def index(request):
     return Response("API Ecommerce")
-
+    
 #Endpoint Utilisateur
 @api_view(['GET'])
 def getUsers(request):
@@ -18,14 +23,14 @@ def getUsers(request):
 
 @api_view(['GET'])
 def getUserById(request,id):
-    user = Utilisateur.objects.get(id_utilisateur=id)
+    user = Utilisateur.objects.get(id=id)
     serializer = UtilisateurSerializer(user)
     return Response(serializer.data)
 
 @api_view(['DELETE'])
 def deleteUserById(request,id):
     try:
-        user = Utilisateur.objects.get(id_utilisateur=id)
+        user = Utilisateur.objects.get(id=id)
     except Utilisateur.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     
@@ -35,7 +40,7 @@ def deleteUserById(request,id):
 @api_view(['PUT'])
 def updateUser(request,id):
     try:
-        user = Utilisateur.objects.get(id_utilisateur=id)
+        user = Utilisateur.objects.get(id=id)
     except Utilisateur.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     
@@ -47,15 +52,14 @@ def updateUser(request,id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
-def createUser(request):
+def createUser(request): 
     data = request.data
-    data["id_utilisateur"] = 0
     
     newUser = Utilisateur(
         nom_utilisateur = data["nom_utilisateur"],
         prenom_utilisateur = data["prenom_utilisateur"],
         email = data["email"],
-        password = data["password"]
+        password = make_password(data["password"])
     )
     
     serializer = UtilisateurSerializer(newUser,data=data)
@@ -71,6 +75,13 @@ def createUser(request):
 def getProducts(request):
     products = Produit.objects.all()
     serializer = ProduitSerializer(products,many=True)
+    return Response(serializer.data)
+
+#Endpoint Produit
+@api_view(["GET"])
+def getProductById(request,id):
+    product = Produit.objects.get(id_produit=id)
+    serializer = ProduitSerializer(product)
     return Response(serializer.data)
     
 @api_view(["GET"])
@@ -113,6 +124,11 @@ def deleteProductById(request,id):
     
     product.delete()
     return Response({"message":"Product deleted succesfully!"},status=status.HTTP_204_NO_CONTENT)
+
+@api_view(["GET"])
+def getCategories(request):
+    categories = Produit.objects.values_list('categorie', flat=True).distinct()
+    return Response(categories)
 
 #Endpoint Panier
 @api_view(["GET"])
@@ -181,6 +197,7 @@ def evaluate_product(request, utilisateur_id, produit_id):
         data['utilisateur'] = utilisateur_id
         data['produit'] = produit_id
         serializer = EvaluationSerializer(data=data)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
