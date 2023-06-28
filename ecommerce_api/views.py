@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view,authentication_classes, permissio
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticated,AllowAny
 
 from .serializers import *
 
@@ -12,32 +13,40 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 @api_view(["GET"])
 def index(request):
     return Response("API Ecommerce")
-    
+
 #Endpoint Utilisateur
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getUsers(request):
     users = Utilisateur.objects.all()
     serializer = UtilisateurSerializer(users,many=True)
     print(serializer.data)
     return Response(serializer.data)
 
+
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getUserById(request,id):
-    user = Utilisateur.objects.get(id=id)
-    serializer = UtilisateurSerializer(user)
-    return Response(serializer.data)
+    try:
+        user = Utilisateur.objects.get(id=id)
+    except Utilisateur.DoesNotExist:
+        return Response({"message":"User not found"},status=status.HTTP_404_NOT_FOUND)
+    
+    return Response(UtilisateurSerializer(user).data)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def deleteUserById(request,id):
     try:
         user = Utilisateur.objects.get(id=id)
     except Utilisateur.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response({"message":"User deleted succesfully"},status=status.HTTP_404_NOT_FOUND)
     
     user.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def updateUser(request,id):
     try:
         user = Utilisateur.objects.get(id=id)
@@ -91,6 +100,7 @@ def getProductByCategory(request,category):
     return Response(serializer.data)
 
 @api_view(["PUT"])
+@permission_classes([IsAuthenticated])
 def updateProduct(request,id):
     try:
         produit = Produit.objects.get(id_produit=id)
@@ -106,6 +116,7 @@ def updateProduct(request,id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def createProduct(request):
     serializer = ProduitSerializer(data=request.data)
     
@@ -132,6 +143,7 @@ def getCategories(request):
 
 #Endpoint Panier
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getPanier(request,id):
     try:
         produits = Panier.objects.get(utilisateur_id=id).produits
@@ -159,6 +171,7 @@ def addOrRemoveInPanier(request, id_utilisateur, id_produit):
 
 #Endpoint Commande    
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getCommande(request,id):
     try:
         commandes = Commande.objects.get(id_utilisateur=id).produit
@@ -168,6 +181,7 @@ def getCommande(request,id):
         return Response({'message': 'Les commandes de cette utilisateur est introuvable'}, status=404)
     
 @api_view(['POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def addOrRemoveCommande(request, utilisateur_id, produit_id):
     try:
         commande = Commande.objects.get(id_utilisateur=utilisateur_id)
@@ -191,6 +205,7 @@ def addOrRemoveCommande(request, utilisateur_id, produit_id):
 
 #endpoint evaluation
 @api_view(['POST', 'PUT'])
+@permission_classes([IsAuthenticated])
 def evaluate_product(request, utilisateur_id, produit_id):
     if request.method == 'POST':
         data = request.data

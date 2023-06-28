@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-v7*p@&_$jkc=e-y+g^3(x)z1qdww6dbp3mr(no6l8f%-$7kl54
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.43.15","localhost"]
+ALLOWED_HOSTS = ["192.168.1.175","localhost"]
 
 
 # Application definition
@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
     'rest_framework',
-    'ecommerce_api.apps.EcommerceApiConfig'
+    'rest_framework_simplejwt',
+    'ecommerce_api.apps.EcommerceApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -146,9 +148,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':(
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    'DEFAULT_AUTHENTICATION_CLASSES':[
+       'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ] 
 }
 
 AUTH_USER_MODEL = "ecommerce_api.Utilisateur"
@@ -165,7 +167,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,  # Active ou désactive la rotation automatique des tokens de rafraîchissement
     'BLACKLIST_AFTER_ROTATION': True,  # Met automatiquement les anciens tokens de rafraîchissement sur liste noire lors de la rotation
     'ALGORITHM': 'HS256',  # Algorithme de signature utilisé pour les tokens
-    'SIGNING_KEY': 'secret',  # Clé de signature du token (à remplacer par votre clé secrète)
+    'SIGNING_KEY': SECRET_KEY,  # Clé de signature du token (à remplacer par votre clé secrète)
     'AUTH_HEADER_TYPES': ('Bearer',),  # Types d'en-tête d'autorisation pris en charge pour le token
     'USER_ID_FIELD': 'id',  # Nom du champ d'identifiant de l'utilisateur dans le modèle d'utilisateur
     'USER_ID_CLAIM': 'user_id',  # Nom de la revendication d'identifiant de l'utilisateur dans le token

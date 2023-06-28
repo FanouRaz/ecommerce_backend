@@ -6,7 +6,7 @@ from .models import *
 class UtilisateurSerializer(serializers.ModelSerializer):
    class Meta:
        model = Utilisateur
-       exclude = ['password']
+       exclude = ['password','is_active','is_staff']
            
 class ProduitSerializer(serializers.ModelSerializer):
     class Meta:

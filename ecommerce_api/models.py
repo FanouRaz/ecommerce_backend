@@ -29,7 +29,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     email = models.CharField(max_length=100, unique=True)
     password = models.CharField(max_length=100)
     role = models.CharField(max_length=30, default="simple_utilisateur")
-    profilePicture = models.ImageField(upload_to="uploads/user/", default="/media/user/user_placeholder.jpeg")
+    profilePicture = models.ImageField(upload_to="uploads/user/", default="uploads/user/user_placeholder.jpeg")
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -58,7 +58,7 @@ class Produit(models.Model):
     region = models.CharField(max_length=100)
     description = models.CharField(max_length=200,null=True)
     prix = models.IntegerField()
-    pathImg = models.ImageField(upload_to="uploads/products/",default="media/uploads/products/logo.png")
+    pathImg = models.ImageField(upload_to="uploads/products/",default="uploads/products/logo.png")
     
 class Panier(models.Model):
     id_panier = models.IntegerField(primary_key=True)
