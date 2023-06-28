@@ -141,7 +141,7 @@ def getCategories(request):
     categories = Produit.objects.values_list('categorie', flat=True).distinct()
     return Response(categories)
 
-#Endpoint Panier
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def getPanier(request,id):

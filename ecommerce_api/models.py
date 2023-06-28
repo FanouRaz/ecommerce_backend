@@ -61,9 +61,9 @@ class Produit(models.Model):
     pathImg = models.ImageField(upload_to="uploads/products/",default="uploads/products/logo.png")
     
 class Panier(models.Model):
-    id_panier = models.IntegerField(primary_key=True)
+    id_panier = models.AutoField(primary_key=True)
     utilisateur = models.OneToOneField(Utilisateur, on_delete=models.CASCADE)
-    produits = models.ManyToManyField(Produit)
+    produits = models.ManyToManyField(Produit,blank=True)
 
 class Commande(models.Model):
     id_commande = models.AutoField(primary_key=True)
@@ -74,6 +74,10 @@ class Commande(models.Model):
     status_annulation = models.BooleanField()
     date_annulation = models.DateField()
     
+class DetailCommande(models.Model):
+    commande = models.ForeignKey(Commande, on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    quantite = models.PositiveIntegerField()
 
 class Notification(models.Model):
     id_notification = models.AutoField(primary_key=True)
