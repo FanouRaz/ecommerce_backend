@@ -10,10 +10,6 @@ from .serializers import *
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer 
 
-@api_view(["GET"])
-def index(request):
-    return Response("API Ecommerce")
-
 #Endpoint Utilisateur
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -153,7 +149,7 @@ def getPanier(request,id):
         return Response({'message': 'Le panier de cette utilisateur est introuvable'}, status=404)
     
 @api_view(['POST', 'DELETE'])
-def addOrRemoveInPanier(request, id_utilisateur, id_produit):
+def addOrRemoveInPanier(request,id_utilisateur, id_produit):
     try:
         panier = Panier.objects.get(utilisateur_id=id_utilisateur)
         produit = Produit.objects.get(id_produit=id_produit)
@@ -206,11 +202,11 @@ def addOrRemoveCommande(request, utilisateur_id, produit_id):
 #endpoint evaluation
 @api_view(['POST', 'PUT'])
 @permission_classes([IsAuthenticated])
-def evaluate_product(request, utilisateur_id, produit_id):
+def evaluate_product(request, id_utilisateur, id_produit):
     if request.method == 'POST':
-        data = request.data
-        data['utilisateur'] = utilisateur_id
-        data['produit'] = produit_id
+        data = request.data.copy()
+        data['utilisateur'] = id_utilisateur
+        data['produit'] = id_produit
         serializer = EvaluationSerializer(data=data)
         
         if serializer.is_valid():
@@ -220,7 +216,7 @@ def evaluate_product(request, utilisateur_id, produit_id):
 
     elif request.method == 'PUT':
         try:
-            evaluation = Evaluation.objects.get(utilisateur=utilisateur_id, produit=produit_id)
+            evaluation = Evaluation.objects.get(utilisateur=id_utilisateur, produit=id_produit)
         except Evaluation.DoesNotExist:
             return Response({"message": "Evaluation not found"}, status=404)
 
@@ -229,3 +225,13 @@ def evaluate_product(request, utilisateur_id, produit_id):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getEvaluation(request, id_utilisateur, id_produit):
+    try:
+        evaluation = Evaluation.objects.get(utilisateur_id=id_utilisateur, produit_id=id_produit)
+        serializer = EvaluationSerializer(evaluation)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Evaluation.DoesNotExist:
+        return Response({'message': 'L\'évaluation spécifiée n\'existe pas.'})

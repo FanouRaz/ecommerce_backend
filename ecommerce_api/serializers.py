@@ -36,7 +36,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 class EvaluationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evaluation
-        fields = '__all__'
+        fields = ['note']
 
 class PayementSerializer(serializers.ModelSerializer):
     class Meta:

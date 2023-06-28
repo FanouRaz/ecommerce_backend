@@ -7,7 +7,6 @@ from .serializers import CustomTokenObtainPairSerializer
 
 urlpatterns = [
     path("createUser/",views.createUser,name="create user"),
-    path("", views.index, name="index"),
     path("users/",views.getUsers, name="get users"),
     path("user/<int:id>",views.getUserById, name="get user by id"),
     path("deleteUser/<int:id>",views.deleteUserById,name="delete user"),
@@ -23,5 +22,7 @@ urlpatterns = [
     path("panier/<int:id_utilisateur>/<int:id_produit>",views.addOrRemoveInPanier,name="add or remove product to Panier"),
     path("commandes/<int:id>",views.getCommande,name="get commande of an user"),
     path("commande/<int:utilisateur_id>/<int:produit_id>",views.addOrRemoveCommande, name="Add or Remove product to commande"),
+    path("evaluer/<int:id_utilisateur>/<int:id_produit>",views.evaluate_product,name="Evaluate product"),
+    path("evaluation/<int:id_utilisateur>/<int:id_produit>",views.getEvaluation,name="get evaluation of one user for one product"),
     path("token/",views.CustomTokenObtainPairView.as_view(),name="Obtain access token and refresh token"),
 ]
