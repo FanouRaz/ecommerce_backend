@@ -68,11 +68,11 @@ class Panier(models.Model):
 class Commande(models.Model):
     id_commande = models.AutoField(primary_key=True)
     id_utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
-    produit = models.ManyToManyField(Produit,blank=True)
+    produits = models.ManyToManyField(Produit,blank=True)
     date_commande = models.DateField(auto_now_add=True)
-    date_livraison = models.DateField()
+    date_livraison = models.DateField(blank=True)
     status_annulation = models.BooleanField()
-    date_annulation = models.DateField()
+    date_annulation = models.DateField(blank=True)
     
 class DetailCommande(models.Model):
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE)
@@ -89,7 +89,6 @@ class Evaluation(models.Model):
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE,null=True)
     note = models.IntegerField()
-    commentaire = models.TextField(blank=True)
 
     class Meta:
         unique_together = ['utilisateur', 'produit']

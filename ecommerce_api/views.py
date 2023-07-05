@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view,authentication_classes, permissio
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import IsAuthenticated,AllowAny
-
+from rest_framework.permissions import IsAuthenticated
+import os
 from .serializers import *
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -35,26 +35,41 @@ def getUserById(request,id):
 def deleteUserById(request,id):
     try:
         user = Utilisateur.objects.get(id=id)
+        
     except Utilisateur.DoesNotExist:
         return Response({"message":"User deleted succesfully"},status=status.HTTP_404_NOT_FOUND)
     
+    profilePicture = user.profilePicture.path 
+    if profilePicture !=  f'{os.getcwd()}/media/uploads/user/user_placeholder.jpeg':
+        os.remove(profilePicture)
+        
     user.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def updateUser(request,id):
+def updateUser(request,id_utilisateur):
     try:
-        user = Utilisateur.objects.get(id=id)
+        utilisateur = Utilisateur.objects.get(id=id_utilisateur)
+        serializer = UtilisateurSerializer(utilisateur, data=request.data)
+        
+        if serializer.is_valid():
+            old_profile_picture = utilisateur.profilePicture.path  # Get the old profile picture path
+            
+            # Check if a new profile picture is provided
+            if 'profilePicture' in request.FILES:
+                # Delete the old profile picture from the media folder
+                if os.path.exists(old_profile_picture) and old_profile_picture != f'{os.getcwd()}/media/uploads/user/user_placeholder.jpeg':
+                    os.remove(old_profile_picture)
+            
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            print(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     except Utilisateur.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    serializer = UtilisateurSerializer(user, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(["POST"])
 def createUser(request): 
@@ -95,6 +110,13 @@ def getProductByCategory(request,category):
     serializer = ProduitSerializer(products,many=True)
     return Response(serializer.data)
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def getProductsByUser(request,utilisateur_id):
+    products = Produit.objects.filter(id_utilisateur=utilisateur_id)
+    serializer = ProduitSerializer(products,many=True)
+    return Response(serializer.data)
+
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def updateProduct(request,id):
@@ -103,9 +125,18 @@ def updateProduct(request,id):
     except Produit.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     
+    
     serializer = ProduitSerializer(produit, data=request.data)
     
     if serializer.is_valid():
+        oldImg = produit.pathImg.path  
+            
+        # Verifier si l'utilisateur a modifier l'image
+        if 'pathImg' in request.FILES:
+            # Suppression de l'ancienne image dans le répertoire media
+            if os.path.exists(oldImg) and oldImg != f'{os.getcwd()}/media/uploads/products/logo.png':
+                os.remove(oldImg)
+            
         serializer.save()
         return Response(serializer.data)
     
@@ -123,12 +154,19 @@ def createProduct(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def deleteProductById(request,id):
     try:
         product = Produit.objects.get(id_produit=id)
     except Produit.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     
+    img = product.pathImg.path
+   
+    #Supprimer l'image dans le repertoire media
+    if img != f'{os.getcwd()}/media/uploads/products/logo.png':
+        os.remove(img)
+        
     product.delete()
     return Response({"message":"Product deleted succesfully!"},status=status.HTTP_204_NO_CONTENT)
 
@@ -168,41 +206,94 @@ def addOrRemoveInPanier(request,id_utilisateur, id_produit):
 #Endpoint Commande    
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def getCommande(request,id):
+def getCommande(request, id_utilisateur):
     try:
-        commandes = Commande.objects.get(id_utilisateur=id).produit
-        serializer = ProduitSerializer(commandes,many=True)
-        return Response(serializer.data)
-    except Commande.DoesNotExist:
-        return Response({'message': 'Les commandes de cette utilisateur est introuvable'}, status=404)
+        utilisateur = Utilisateur.objects.get(id=id_utilisateur)
+    except Utilisateur.DoesNotExist:
+        return Response({'message': 'Utilisateur inexistant.'}, status=status.HTTP_404_NOT_FOUND)
+
+    commandes = Commande.objects.filter(id_utilisateur=utilisateur)
+    commandes_data = []
+
+    for commande in commandes:
+        details_commande = DetailCommande.objects.filter(commande=commande)
+        produits = []
+
+        for detail_commande in details_commande:
+            produit_data = {
+                'id_produit': detail_commande.produit.id_produit,
+                'nom_produit': detail_commande.produit.nom,
+                'quantite': detail_commande.quantite
+            }
+            produits.append(produit_data)
+
+        commande_data = {
+            'id_commande': commande.id_commande,
+            'date_commande': commande.date_commande,
+            'produits': produits
+        }
+        commandes_data.append(commande_data)
+
+    return Response(commandes_data, status=status.HTTP_200_OK)
     
-@api_view(['POST', 'DELETE'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def addOrRemoveCommande(request, utilisateur_id, produit_id):
+def addCommande(request, id_utilisateur):
+    panier = request.data.get('panier')
+
+    # Vérifier si l'utilisateur existe
     try:
-        commande = Commande.objects.get(id_utilisateur=utilisateur_id)
+        utilisateur = Utilisateur.objects.get(id=id_utilisateur)
+    except Utilisateur.DoesNotExist:
+        return Response({'message': 'Utilisateur inexistant.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Créer une nouvelle commande
+    commande = Commande.objects.create(id_utilisateur=utilisateur, status_annulation=False, date_annulation=None)
+
+    for item in panier:
+        id_produit = item.get('id_produit')
+        quantite = item.get('quantite')
+
+        # Vérifier si le produit existe
+        try:
+            produit = Produit.objects.get(id=id_produit)
+        except Produit.DoesNotExist:
+            return Response({'message': f"Produit d'ID {id_produit} inexistant."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Créer un détail de commande pour le produit spécifié
+        detail_commande = DetailCommande.objects.create(commande=commande, produit=produit, quantite=quantite)
+
+    return Response({'message': 'Commande passée avec succès.'}, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def removeProductCommande(request, id_utilisateur, id_produit):
+    try:
+        utilisateur = Utilisateur.objects.get(id=id_utilisateur)
+        produit = Produit.objects.get(id=id_produit)
+    except (Utilisateur.DoesNotExist, Produit.DoesNotExist):
+        return Response({'message': 'Utilisateur ou produit inexistant.'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        commande = Commande.objects.get(id_utilisateur=utilisateur)
     except Commande.DoesNotExist:
-        return Response({"message": "Commande non trouvée"}, status=404)
+        return Response({'message': 'Commande inexistante.'}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'POST':
-        try:
-            commande.produit.add(produit_id)
-        except Exception as e:
-            return Response({"message": str(e)}, status=400)
+    # Supprimer le produit de la commande
+    commande.produit.remove(produit)
 
-    elif request.method == 'DELETE':
-        try:
-            commande.produit.remove(produit_id)
-        except Exception as e:
-            return Response({"message": str(e)}, status=400)
+    # Supprimer le détail de commande correspondant
+    detail_commande = DetailCommande.objects.filter(commande=commande, produit=produit).first()
+    if detail_commande:
+        detail_commande.delete()
 
-    serializer = CommandeSerializer(commande)
-    return Response(serializer.data)
+    return Response({'message': 'Produit supprimé de la commande avec succès.'}, status=status.HTTP_200_OK)
+
 
 #endpoint evaluation
 @api_view(['POST', 'PUT'])
 @permission_classes([IsAuthenticated])
-def evaluate_product(request, id_utilisateur, id_produit):
+def evaluateProduct(request, id_utilisateur, id_produit):
     if request.method == 'POST':
         data = request.data.copy()
         data['utilisateur'] = id_utilisateur
