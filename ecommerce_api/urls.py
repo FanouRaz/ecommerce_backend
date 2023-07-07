@@ -26,5 +26,5 @@ urlpatterns = [
     path("commande/<int:id_utilisateur>/<int:id_produit>",views.removeProductCommande,name="Remove product from commande"),
     path("evaluer/<int:id_utilisateur>/<int:id_produit>",views.evaluateProduct,name="Evaluate product"),
     path("evaluation/<int:id_utilisateur>/<int:id_produit>",views.getEvaluation,name="get evaluation of one user for one product"),
-    path("token /",views.CustomTokenObtainPairView.as_view(),name="Obtain access token and refresh token"),
+    path("token/",views.CustomTokenObtainPairView.as_view(),name="Obtain access token and refresh token"),
 ]
